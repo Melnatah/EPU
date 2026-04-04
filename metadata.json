@@ -1,0 +1,5 @@
+{
+  "name": "Remix: EPU Biopsie des Organes",
+  "description": "Application web pour une Étude Post-Universitaire (EPU) sur les protocoles et pratiques de biopsie des organes, destinée aux résidents en Radiologie.",
+  "requestFramePermissions": []
+}
