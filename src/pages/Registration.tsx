@@ -51,17 +51,17 @@ export default function Registration() {
         ? `Autre (${data.otherSpecialty?.trim()})` 
         : `Résident (${data.residencyYear})`;
 
-      const { error } = await supabase.from('registrations').insert([{
+      const { data: regData, error } = await supabase.from('registrations').insert([{
         nom: data.lastName,
         prenom: data.firstName,
         email: data.email,
         etablissement: data.hospital,
         role: finalRole
-      }]);
+      }]).select().single();
       
       if (error) throw error;
       
-      loginUser(data);
+      loginUser(regData);
       navigate("/vault");
     } catch (err: any) {
       console.error("Erreur d'inscription:", err);

@@ -1,3 +1,4 @@
+import ProgramTimeline from "@/src/components/ProgramTimeline";
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
@@ -149,19 +150,22 @@ export default function Home() {
             <p className="text-base md:text-xl text-on-surface-variant mb-10 max-w-xl leading-relaxed font-normal">
               Votre espace de préparation dédié. Accédez à toutes les ressources documentaires essentielles pour acquérir des bases solides avant la journée de pratique.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button asChild size="lg" className="h-14 px-8 rounded-full shadow-xl shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 duration-300">
-                <Link to={isRegistered ? "/vault" : "/register"} className="text-lg font-medium">
-                  {isRegistered ? `Salut, ${user?.firstName || "Résident"}` : "Rejoindre l'EPU"}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-14 px-8 rounded-full glass-panel border-outline/20 hover:bg-surface-container-low transition-all duration-300">
-                <Link to="/vault" className="text-lg font-medium">
-                  Explorer la Thématique
-                </Link>
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button asChild size="lg" className="h-14 px-8 rounded-full shadow-xl shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 duration-300">
+                  <Link to={isRegistered ? "/vault" : "/register"} className="text-lg font-medium">
+                    {isRegistered ? `Salut, ${user?.firstName || "Résident"}` : "Rejoindre l'EPU"}
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                <Button 
+                  onClick={() => document.getElementById('program-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  size="lg" 
+                  variant="outline" 
+                  className="h-14 px-8 rounded-full glass-panel border-outline/20 hover:bg-surface-container-low transition-all duration-300 cursor-pointer"
+                >
+                  <span className="text-lg font-medium">Voir le Programme</span>
+                </Button>
+              </div>
           </motion.div>
 
           <motion.div 
@@ -271,6 +275,11 @@ export default function Home() {
             </motion.div>
           </div>
         </div>
+      </section>
+      
+      {/* Program Section */}
+      <section id="program-section" className="relative z-10 px-4 py-24 w-full bg-surface">
+        <ProgramTimeline />
       </section>
 
       {/* Partenaires Section */}
