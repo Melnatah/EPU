@@ -22,44 +22,10 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Supprime la config par défaut de Nginx
-RUN rm -f /etc/nginx/conf.d/default.conf
+RUN rm -rf /etc/nginx/conf.d/*
 
-# Écrit la config Nginx directement (pas de COPY pour éviter les problèmes de cache/ignore)
-RUN printf 'server {\n\
-    listen 80;\n\
-    server_name localhost;\n\
-    root /usr/share/nginx/html;\n\
-    index index.html;\n\
-\n\
-    # Optimisations globales pour la performance\n\
-    tcp_nopush on;\n\
-    tcp_nodelay on;\n\
-    types_hash_max_size 2048;\n\
-\n\
-    # Activer la compression Gzip pour tous les utilisateurs\n\
-    gzip on;\n\
-    gzip_vary on;\n\
-    gzip_comp_level 5;\n\
-    gzip_min_length 256;\n\
-    gzip_proxied any;\n\
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;\n\
-\n\
-    location / {\n\
-        try_files $uri $uri/ /index.html;\n\
-    }\n\
-\n\
-    location /assets/ {\n\
-        alias /usr/share/nginx/html/assets/;\n\
-        expires 1y;\n\
-        add_header Cache-Control "public, max-age=31536000, immutable";\n\
-        access_log off;\n\
-    }\n\
-\n\
-    error_page 500 502 503 504 /50x.html;\n\
-    location = /50x.html {\n\
-        root /usr/share/nginx/html;\n\
-    }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+# Copie la nouvelle config Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copie du build vers le répertoire de Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
