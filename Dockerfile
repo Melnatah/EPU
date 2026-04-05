@@ -22,6 +22,12 @@ RUN npm run build
 # Étape 2 : Serveur de production (Nginx)
 FROM nginx:stable-alpine
 
+# Force rebuild - v3 2026-04-05
+ARG CACHE_BUST=3
+
+# Supprime la config par défaut de Nginx
+RUN rm -f /etc/nginx/conf.d/default.conf
+
 # Copie du build vers le répertoire de Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
