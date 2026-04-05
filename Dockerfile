@@ -24,11 +24,32 @@ FROM nginx:stable-alpine
 # Supprime la config par défaut de Nginx
 RUN rm -f /etc/nginx/conf.d/default.conf
 
+# Écrit la config Nginx directement (pas de COPY pour éviter les problèmes de cache/ignore)
+RUN printf 'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+\n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+\n\
+    location /assets/ {\n\
+        alias /usr/share/nginx/html/assets/;\n\
+        expires 1y;\n\
+        add_header Cache-Control "public, immutable";\n\
+        access_log off;\n\
+    }\n\
+\n\
+    error_page 500 502 503 504 /50x.html;\n\
+    location = /50x.html {\n\
+        root /usr/share/nginx/html;\n\
+    }\n\
+}\n' > /etc/nginx/conf.d/default.conf
+
 # Copie du build vers le répertoire de Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Configuration Nginx pour gérer le routage SPA (React)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Permissions correctes pour Nginx
 RUN chown -R nginx:nginx /usr/share/nginx/html && chmod -R 755 /usr/share/nginx/html
