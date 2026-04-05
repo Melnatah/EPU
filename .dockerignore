@@ -5,6 +5,4 @@ dist
 .git
 .gitignore
 README.md
-Dockerfile
-nginx.conf
 nginx_fix.conf
