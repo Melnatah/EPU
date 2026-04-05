@@ -31,6 +31,19 @@ RUN printf 'server {\n\
     root /usr/share/nginx/html;\n\
     index index.html;\n\
 \n\
+    # Optimisations globales pour la performance\n\
+    tcp_nopush on;\n\
+    tcp_nodelay on;\n\
+    types_hash_max_size 2048;\n\
+\n\
+    # Activer la compression Gzip pour tous les utilisateurs\n\
+    gzip on;\n\
+    gzip_vary on;\n\
+    gzip_comp_level 5;\n\
+    gzip_min_length 256;\n\
+    gzip_proxied any;\n\
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;\n\
+\n\
     location / {\n\
         try_files $uri $uri/ /index.html;\n\
     }\n\
@@ -38,7 +51,7 @@ RUN printf 'server {\n\
     location /assets/ {\n\
         alias /usr/share/nginx/html/assets/;\n\
         expires 1y;\n\
-        add_header Cache-Control "public, immutable";\n\
+        add_header Cache-Control "public, max-age=31536000, immutable";\n\
         access_log off;\n\
     }\n\
 \n\
