@@ -12,11 +12,20 @@ import { motion } from "motion/react";
 const formSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  residencyYear: z.enum(["DES 1", "DES 2", "DES 3", "DES 4"], {
+  residencyYear: z.enum(["DES 1", "DES 2", "DES 3", "DES 4", "Autres"], {
     message: "Veuillez sélectionner votre niveau",
   }),
+  otherSpecialty: z.string().optional(),
   hospital: z.string().min(2, "Veuillez indiquer votre centre hospitalier"),
   email: z.string().email("Email invalide"),
+}).superRefine((val, ctx) => {
+  if (val.residencyYear === "Autres" && (!val.otherSpecialty || val.otherSpecialty.trim().length < 2)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Veuillez préciser votre spécialité",
+      path: ["otherSpecialty"],
+    });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -27,20 +36,27 @@ export default function Registration() {
 
   const {
     register,
+    watch,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
 
+  const selectedYear = watch("residencyYear");
+
   const onSubmit = async (data: FormValues) => {
     try {
+      const finalRole = data.residencyYear === "Autres" 
+        ? `Autre (${data.otherSpecialty?.trim()})` 
+        : `Résident (${data.residencyYear})`;
+
       const { error } = await supabase.from('registrations').insert([{
         nom: data.lastName,
         prenom: data.firstName,
         email: data.email,
         etablissement: data.hospital,
-        role: `Résident (${data.residencyYear})`
+        role: finalRole
       }]);
       
       if (error) throw error;
@@ -109,9 +125,23 @@ export default function Registration() {
                     <option value="DES 2">DES 2</option>
                     <option value="DES 3">DES 3</option>
                     <option value="DES 4">DES 4</option>
+                    <option value="Autres">Autres (Précisez)</option>
                   </select>
                   {errors.residencyYear && <p className="text-error text-xs mt-1 ml-1">{errors.residencyYear.message}</p>}
                 </div>
+                
+                {selectedYear === "Autres" && (
+                  <div className="space-y-2 md:col-span-2 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant ml-1">Spécifiez (Grade / Spécialité)</label>
+                    <Input 
+                      placeholder="ex: Médecin Généraliste, Stagiaire..." 
+                      {...register("otherSpecialty")}
+                      className={errors.otherSpecialty ? "ring-2 ring-error/50" : ""}
+                    />
+                    {errors.otherSpecialty && <p className="text-error text-xs mt-1 ml-1">{errors.otherSpecialty.message}</p>}
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant ml-1">Centre Hospitalier</label>
                   <Input 
