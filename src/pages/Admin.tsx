@@ -4,6 +4,7 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Card } from "@/src/components/ui/card";
 import { supabase } from "@/src/lib/supabase";
+import { useAuth } from "@/src/context/AuthContext";
 
 // Dashboard principal de l'administration
 export default function Admin() {
@@ -23,11 +24,9 @@ export default function Admin() {
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem("adminAuth") === "true";
-  });
+  const { isAdmin, logout: contextLogout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -38,29 +37,24 @@ export default function Admin() {
     setAuthError("");
     
     try {
-      const { data, error } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
         
-      if (data) {
-        setIsAuthenticated(true);
-        sessionStorage.setItem("adminAuth", "true");
-      } else {
-        setAuthError("Identifiants incorrects. Accès refusé.");
+      if (error) {
+        setAuthError("Identifiants incorrects ou accès refusé.");
       }
+      // Le changement d'état sera géré par AuthContext (onAuthStateChange)
     } catch(err) {
-       setAuthError("Identifiants incorrects ou table admins manquante.");
+       setAuthError("Erreur de connexion au service d'authentification.");
     } finally {
        setIsAuthenticating(false);
     }
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem("adminAuth");
+    contextLogout();
   };
 
   const fetchData = async () => {
@@ -100,10 +94,10 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAdmin) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAdmin]);
 
   const handleDeleteReg = async (id: string) => {
     if (!confirm("Voulez-vous vraiment supprimer cet inscrit ?")) return;
@@ -224,7 +218,7 @@ export default function Admin() {
     document.body.removeChild(link);
   };
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center w-full min-h-[85vh] p-4 relative overflow-hidden bg-surface-container-lowest">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
@@ -241,11 +235,11 @@ export default function Admin() {
             <div className="relative">
               <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/50" />
               <Input 
-                type="text" 
-                placeholder="Nom d'utilisateur..." 
+                type="email" 
+                placeholder="Email administrateur..." 
                 className="pl-12 bg-surface-container-low border-outline/10 h-12 rounded-xl"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="relative">
