@@ -61,11 +61,35 @@ CREATE POLICY "Admin can manage categories" ON public.categories
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
--- Politiques pour les registrations (Public peut chercher pour se connecter, Admin gère tout)
-CREATE POLICY "Public can search registrations" ON public.registrations
-  FOR SELECT USING (true);
+-- Politiques pour les registrations
+CREATE POLICY "Users can view own registration" ON public.registrations
+  FOR SELECT USING (email = auth.jwt() ->> 'email' OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "Users can update own registration" ON public.registrations
+  FOR UPDATE USING (email = auth.jwt() ->> 'email') WITH CHECK (email = auth.jwt() ->> 'email');
 
 CREATE POLICY "Admin can manage registrations" ON public.registrations
   FOR ALL USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
+
+-- 4. Fonctions RPC pour le Login et l'Inscription Résident (Contournement RLS contrôlé)
+CREATE OR REPLACE FUNCTION public.find_registration(search_term TEXT)
+RETURNS SETOF public.registrations LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY SELECT * FROM public.registrations
+  WHERE email ILIKE search_term OR nom ILIKE search_term OR prenom ILIKE search_term LIMIT 1;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.register_resident(p_nom TEXT, p_prenom TEXT, p_email TEXT, p_etablissement TEXT, p_role TEXT)
+RETURNS public.registrations LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE new_reg public.registrations;
+BEGIN
+  INSERT INTO public.registrations (nom, prenom, email, etablissement, role)
+  VALUES (p_nom, p_prenom, p_email, p_etablissement, p_role)
+  RETURNING * INTO new_reg;
+  RETURN new_reg;
+END; $$;
+
+GRANT EXECUTE ON FUNCTION public.find_registration(TEXT) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.register_resident(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, service_role;

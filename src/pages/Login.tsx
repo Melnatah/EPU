@@ -22,10 +22,7 @@ export default function Login() {
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("registrations")
-        .select("*")
-        .or(`email.ilike.${email},nom.ilike.${email},prenom.ilike.${email}`)
-        .limit(1);
+        .rpc("find_registration", { search_term: email });
 
       if (fetchError || !data || data.length === 0) {
         setError("Aucun compte trouvé avec cet identifiant.");

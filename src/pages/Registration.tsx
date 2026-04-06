@@ -51,13 +51,13 @@ export default function Registration() {
         ? `Autre (${data.otherSpecialty?.trim()})` 
         : `Résident (${data.residencyYear})`;
 
-      const { data: regData, error } = await supabase.from('registrations').insert([{
-        nom: data.lastName,
-        prenom: data.firstName,
-        email: data.email,
-        etablissement: data.hospital,
-        role: finalRole
-      }]).select().single();
+      const { data: regData, error } = await supabase.rpc('register_resident', {
+        p_nom: data.lastName,
+        p_prenom: data.firstName,
+        p_email: data.email,
+        p_etablissement: data.hospital,
+        p_role: finalRole
+      });
       
       if (error) throw error;
       
@@ -77,7 +77,7 @@ export default function Registration() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
         className="w-full max-w-2xl relative z-10"
       >
         <Card className="glass-panel border-outline-variant/20 bg-surface-container-low/80">
@@ -85,8 +85,8 @@ export default function Registration() {
             <CardTitle className="text-2xl md:text-3xl font-extrabold font-headline mb-2 text-on-surface">
               Inscription à l'EPU <span className="text-primary block mt-1">Biopsie Échoguidée</span>
             </CardTitle>
-            <CardDescription className="text-sm md:text-base font-light text-on-surface-variant max-w-sm mx-auto mt-2">
-              Rejoignez la communauté. Obtenez votre accès exclusif aux Thématiques et préparez-vous pour l'atelier pratique.
+            <CardDescription className="text-sm md:text-base font-medium text-on-surface-variant/70 max-w-sm mx-auto mt-2">
+              Rejoignez la communauté. Accédez aux ressources et préparez l'atelier pratique.
             </CardDescription>
           </CardHeader>
           <CardContent>
